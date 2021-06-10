@@ -3,8 +3,8 @@ version: "2"
 services:
   jenkins:
     build:
-      dockerfile: ./jenkins/Dockerfile
-      context: ./
+      dockerfile: ./Dockerfile
+      context: ./jenkins
     image: ssdlc-jenkins
     container_name: jenkins
     networks:
