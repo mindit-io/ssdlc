@@ -49,6 +49,8 @@ services:
       - uwsgi
     environment:
       NGINX_METRICS_ENABLED: ${NGINX_METRICS_ENABLED:-false}
+    networks:
+      - main-net
     volumes:
       - defectdojo_media:/usr/share/nginx/html/media
     ports:
@@ -65,6 +67,8 @@ services:
     depends_on:
       - mysql
     entrypoint: ['/wait-for-it.sh', 'mysql:3306', '-t', '30', '--', '/entrypoint-uwsgi.sh']
+    networks:
+      - main-net
     environment:
       DD_DEBUG: 'False'
       DD_DJANGO_METRICS_ENABLED: ${DD_DJANGO_METRICS_ENABLED:-False}
@@ -79,12 +83,16 @@ services:
           source: ./docker/extra_settings
           target: /app/docker/extra_settings
         - defectdojo_media:${DD_MEDIA_ROOT:-/app/media}
+        - jenkins_home:/var/jenkins_home
+
   celerybeat:
     image: defectdojo/defectdojo-django:${DJANGO_VERSION:-latest}
     depends_on:
       - mysql
       - rabbitmq
     entrypoint: ['/wait-for-it.sh', 'mysql:3306', '-t', '30', '--', '/entrypoint-celery-beat.sh']
+    networks:
+      - main-net
     environment:
       DD_DATABASE_URL: ${DD_DATABASE_URL:-mysql://defectdojo:defectdojo@mysql:3306/defectdojo}
       DD_CELERY_BROKER_USER: ${DD_CELERY_BROKER_USER:-guest}
@@ -95,6 +103,7 @@ services:
         - type: bind
           source: ./docker/extra_settings
           target: /app/docker/extra_settings
+
   celeryworker:
     image: defectdojo/defectdojo-django:${DJANGO_VERSION:-latest}
     depends_on:
@@ -106,15 +115,20 @@ services:
       DD_CELERY_BROKER_USER: ${DD_CELERY_BROKER_USER:-guest}
       DD_CELERY_BROKER_PASSWORD: ${DD_CELERY_BROKER_USER:-guest}
       DD_SECRET_KEY: ${DD_SECRET_KEY:-hhZCp@D28z!n@NED*yB!ROMt+WzsY*iq}
-      DD_CREDENTIAL_AES_256_KEY: ${DD_CREDENTIAL_AES_256_KEY:-&91a*agLqesc*0DJ+2*bAbsUZfR*4nLw}
+      DD_CREDENTIAL_AES_256_KEY: ${DD_CREDENTIAL_AES_256_KEY:-&91a*agLqesc*0DJ+2*bAbsUZfR*4nLw}    
+    networks:
+      - main-net
     volumes:
         - type: bind
           source: ./docker/extra_settings
           target: /app/docker/extra_settings
+
   initializer:
     image: defectdojo/defectdojo-django:${DJANGO_VERSION:-latest}
     depends_on:
       - mysql
+    networks:
+      - main-net
     entrypoint: ['/wait-for-it.sh', 'mysql:3306', '--', '/entrypoint-initializer.sh']
     environment:
       DD_DATABASE_URL: ${DD_DATABASE_URL:-mysql://defectdojo:defectdojo@mysql:3306/defectdojo}
@@ -139,9 +153,15 @@ services:
       MYSQL_DATABASE: ${DD_DATABASE_NAME:-defectdojo}
     command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
     volumes:
-        - defectdojo_data:/var/lib/mysql
+      - defectdojo_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - main-net
   rabbitmq:
     image: rabbitmq:3.8.14@sha256:b8c2a55dd4af3db0affb1c89ac1ea9c89f4d71a1fe46cf53884dd35bc73db6c6
+    networks:
+      - main-net
 
 networks:
   main-net:
