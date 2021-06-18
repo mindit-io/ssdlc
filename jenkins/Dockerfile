@@ -6,4 +6,5 @@ USER root
 RUN apt-get update && apt-get install -y maven
 USER jenkins
 RUN mkdir -p /var/jenkins_home/.m2/
-COPY ./settings.xml /var/jenkins_home/.m2/settings.xml
+COPY --chown=jenkins:jenkins ./settings.xml /var/jenkins_home/.m2/settings.xml
+COPY --chown=jenkins:jenkins ./jobs /var/jenkins_home/jobs
